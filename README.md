@@ -1,85 +1,84 @@
-# Lottery Draw Optimization Model
+# EuroMillions Number Predictor
 
-This model is designed to predict two lottery combinations by minimizing the total squared error from historical lottery draws while enforcing uniqueness and diversity constraints.
+This project implements a mathematical optimization model to predict potential winning numbers for the EuroMillions lottery based on historical draw data.
 
-## Sets
+## Model Description
 
-- \( DRAWS \): Set of historical lottery draws.
-- \( COMBINATIONS = \{1, 2\} \): Set representing two lottery combinations to be predicted.
+The model uses integer programming to generate two combinations of EuroMillions numbers that are statistically likely based on past draws while ensuring diversity between the combinations.
 
-## Parameters
+### Sets
 
-- \( Hovedtall_{i,j} \): Main numbers from historical draws, where \( i \in DRAWS \) and \( j \in \{1, \dots, 5\} \) for each draw.
-- \( Stjernetall_{i,k} \): Star numbers from historical draws, where \( i \in DRAWS \) and \( k \in \{1, 2\} \).
-- \( \epsilon = 10^{-6} \): Small positive number for enforcing strict inequality in ordering constraints.
+- \( DRAWS \): Set of historical draws
+- \( COMBINATIONS := \{1, 2\} \): Set for two combinations
 
-## Variables
+### Parameters
 
-- \( \text{Next\_Hovedtall}_{c,j} \): The main numbers for the \( c \)-th combination, where \( c \in COMBINATIONS \) and \( j \in \{1, \dots, 5\} \). These are integer variables constrained to the range \( [1, 50] \).
-- \( \text{Next\_Stjernetall}_{c,k} \): The star numbers for the \( c \)-th combination, where \( k \in \{1, 2\} \). These are integer variables constrained to the range \( [1, 12] \).
-- \( z_{c,i,j} \): Binary variables to ensure uniqueness of main numbers within each combination.
-- \( w_{c} \): Binary variables to ensure uniqueness of star numbers within each combination.
+- \( Hovedtall_{d,i} \): Historical main numbers (5 per draw)
+- \( Stjernetall_{d,j} \): Historical star numbers (2 per draw)
+- \( \epsilon := 10^{-6} \): Small positive number for strict inequalities
 
-## Objective Function
+### Variables
 
-The objective function minimizes the total squared difference between the predicted and historical main and star numbers for each combination:
+- \( Next\_Hovedtall_{c,i} \in \mathbb{Z}, 1 \leq Next\_Hovedtall_{c,i} \leq 50 \): Next main numbers to be drawn
+- \( Next\_Stjernetall_{c,j} \in \mathbb{Z}, 1 \leq Next\_Stjernetall_{c,j} \leq 12 \): Next star numbers to be drawn
+- \( z_{c,i,j} \in \{0,1\} \): Binary variables for enforcing uniqueness of main numbers
+- \( w_c \in \{0,1\} \): Binary variables for enforcing uniqueness of star numbers
 
-\[
-\text{Minimize } \quad \text{Total\_Error} = \sum_{c \in COMBINATIONS} \sum_{i \in DRAWS} \left( \sum_{j=1}^5 (\text{Next\_Hovedtall}_{c,j} - Hovedtall_{i,j})^2 + \sum_{k=1}^2 (\text{Next\_Stjernetall}_{c,k} - Stjernetall_{i,k})^2 \right)
-\]
+### Objective Function
 
-## Constraints
-
-### 1. **Uniqueness of Main Numbers**
-
-Each main number within a combination must be unique. This is enforced by the binary variables \( z_{c,i,j} \):
+Minimize the total error, defined as the sum of squared differences from historical draws for both combinations:
 
 \[
-\text{Next\_Hovedtall}_{c,i} - \text{Next\_Hovedtall}_{c,j} \leq -1 + 100 \cdot z_{c,i,j} \quad \forall c \in COMBINATIONS, \, i \neq j
-\]
-\[
-\text{Next\_Hovedtall}_{c,j} - \text{Next\_Hovedtall}_{c,i} \leq -1 + 100 \cdot (1 - z_{c,i,j}) \quad \forall c \in COMBINATIONS, \, i \neq j
+\min \sum_{c \in COMBINATIONS} \sum_{i \in DRAWS} \left( \sum_{j=1}^5 (Next\_Hovedtall_{c,j} - Hovedtall_{i,j})^2 + \sum_{k=1}^2 (Next\_Stjernetall_{c,k} - Stjernetall_{i,k})^2 \right)
 \]
 
-### 2. **Uniqueness of Star Numbers**
+### Key Constraints
 
-Each star number within a combination must also be unique:
+1. Uniqueness of main numbers within each combination:
+   \[
+   Next\_Hovedtall_{c,i} - Next\_Hovedtall_{c,j} \leq -1 + 100z_{c,i,j}, \quad \forall c \in COMBINATIONS, i \in \{1,\ldots,4\}, j \in \{i+1,\ldots,5\}
+   \]
+   \[
+   Next\_Hovedtall_{c,j} - Next\_Hovedtall_{c,i} \leq -1 + 100(1-z_{c,i,j}), \quad \forall c \in COMBINATIONS, i \in \{1,\ldots,4\}, j \in \{i+1,\ldots,5\}
+   \]
 
-\[
-\text{Next\_Stjernetall}_{c,1} - \text{Next\_Stjernetall}_{c,2} \leq -1 + 100 \cdot w_{c} \quad \forall c \in COMBINATIONS
-\]
-\[
-\text{Next\_Stjernetall}_{c,2} - \text{Next\_Stjernetall}_{c,1} \leq -1 + 100 \cdot (1 - w_{c}) \quad \forall c \in COMBINATIONS
-\]
+2. Uniqueness of star numbers within each combination:
+   \[
+   Next\_Stjernetall_{c,1} - Next\_Stjernetall_{c,2} \leq -1 + 100w_c, \quad \forall c \in COMBINATIONS
+   \]
+   \[
+   Next\_Stjernetall_{c,2} - Next\_Stjernetall_{c,1} \leq -1 + 100(1-w_c), \quad \forall c \in COMBINATIONS
+   \]
 
-### 3. **Ascending Order**
+3. Ascending order within each combination:
+   \[
+   Next\_Hovedtall_{c,i} + \epsilon \leq Next\_Hovedtall_{c,i+1}, \quad \forall c \in COMBINATIONS, i \in \{1,\ldots,4\}
+   \]
+   \[
+   Next\_Stjernetall_{c,1} + \epsilon \leq Next\_Stjernetall_{c,2}, \quad \forall c \in COMBINATIONS
+   \]
 
-The numbers within each combination must be in ascending order to ensure a consistent prediction format:
+4. Ensuring the two combinations are sufficiently different:
+   \[
+   \sum_{j=1}^5 |Next\_Hovedtall_{1,j} - Next\_Hovedtall_{2,j}| + \sum_{k=1}^2 |Next\_Stjernetall_{1,k} - Next\_Stjernetall_{2,k}| \geq 10
+   \]
 
-\[
-\text{Next\_Hovedtall}_{c,i} + \epsilon \leq \text{Next\_Hovedtall}_{c,i+1} \quad \forall c \in COMBINATIONS, \, i = 1, \dots, 4
-\]
-\[
-\text{Next\_Stjernetall}_{c,1} + \epsilon \leq \text{Next\_Stjernetall}_{c,2} \quad \forall c \in COMBINATIONS
-\]
+5. Preventing the second combination from being too similar to the first:
+   \[
+   |Next\_Hovedtall_{1,j} - Next\_Hovedtall_{2,j}| \geq 2, \quad \forall j \in \{1,\ldots,5\}
+   \]
+   \[
+   |Next\_Stjernetall_{1,k} - Next\_Stjernetall_{2,k}| \geq 1, \quad \forall k \in \{1,2\}
+   \]
 
-### 4. **Diversity Between Combinations**
+## Usage
 
-The two combinations should differ sufficiently to avoid near-identical predictions:
+To use this model:
 
-\[
-\sum_{j=1}^5 \left| \text{Next\_Hovedtall}_{1,j} - \text{Next\_Hovedtall}_{2,j} \right| + \sum_{k=1}^2 \left| \text{Next\_Stjernetall}_{1,k} - \text{Next\_Stjernetall}_{2,k} \right| \geq 10
-\]
+1. Prepare your historical draw data in the required format.
+2. Solve the optimization problem using an appropriate solver (e.g., CPLEX, Gurobi).
+3. The solution will provide two sets of predicted numbers for the next EuroMillions draw.
 
-### 5. **Diversity in Main and Star Numbers Between Combinations**
+## Disclaimer
 
-To further ensure diversity, each main and star number in one combination must differ by at least 2 or 1 from the corresponding number in the other combination, respectively:
-
-\[
-\left| \text{Next\_Hovedtall}_{1,j} - \text{Next\_Hovedtall}_{2,j} \right| \geq 2 \quad \forall j = 1, \dots, 5
-\]
-\[
-\left| \text{Next\_Stjernetall}_{1,k} - \text{Next\_Stjernetall}_{2,k} \right| \geq 1 \quad \forall k = 1, 2
-\]
-
-This model is implemented in AMPL and can be used to generate unique, diverse, and optimized lottery predictions based on historical data.
+This model is for educational and entertainment purposes only. It does not guarantee winning numbers and should not be used as a basis for gambling decisions.
