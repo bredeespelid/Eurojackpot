@@ -1,4 +1,4 @@
-# EuroMillions Number Predictor
+# Eurojackpot Number Predictor
 
 This project is just for fun!
 
