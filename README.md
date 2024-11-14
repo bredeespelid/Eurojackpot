@@ -1,10 +1,12 @@
 # EuroMillions Number Predictor
 
-This project implements a mathematical optimization model to predict potential winning numbers for the EuroMillions lottery based on historical draw data.
+This project is just for fun!
+
+It implements a mathematical optimization model to predict potential winning numbers for the EuroMillions lottery based on historical draw data.
 
 ## Model Description
 
-The model uses integer programming to generate two combinations of EuroMillions numbers that are statistically likely based on past draws while ensuring diversity between the combinations.
+The model uses integer programming to generate two combinations of EuroMillions numbers based on past draws while ensuring diversity between the combinations.
 
 ### Sets
 
